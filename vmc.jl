@@ -1,27 +1,35 @@
-using LinearAlgebra
-
-
 const M = 300
 const β = 1/2
 const κ = 2
+const N = 30000
+const n = 1000
 
-function localEnergy(r₁,r₂)
+mutable struct Walker
+    posE1::Vector{Float64}
+    posE2::Vector{Float64}
+end
+
+function localEnergy(walker::Walker,α)
+    r₁ = walker.posE1
+    r₂ = walker.posE2
     r₁₂ = norm(r₁-r₂)
     u = 1 + α*r₁₂
-    (κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1-2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2*(r₁/norm(r₁)- r₂/norm(r₂)) * (r₁-r₂)/r₁₂
+    return (κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1 - 2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2 * norm((r₁/norm(r₁) - r₂/norm(r₂)) .* (r₁-r₂)/r₁₂)
+end
+
+function initWalkers(M)
+    walkers = Array{Walker}(undef, M)
+    for i in 1:M
+        pos1 = rand(Float64,3)
+        pos2 = rand(Float64,3)
+        walkers[i] = Walker(pos1,pos2)
+    end
+    return walkers
 end
 
 
-function vmc()
-    walkers = randn((M,2,2))
-end
 
-function initPos()
-    
-end
+@time walkers = initWalkers(300)
 
-
-x = randn((3))
-y = randn((3))
-
-norm(x.*y)
+walkers
+@time localEnergy.(walkers, 0.14)
