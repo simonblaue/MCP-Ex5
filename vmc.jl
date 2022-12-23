@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 const M = 300
 const β = 1/2
 const κ = 2
