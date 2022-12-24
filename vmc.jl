@@ -1,4 +1,6 @@
 using LinearAlgebra
+using Statistics
+using Plots
 
 const M = 300
 const β = 1/2
@@ -30,8 +32,48 @@ function initWalkers(M)
 end
 
 
+function vmc(walkers, s, N, n)
+    α = 0.15
+    energies = Array{Float64}(undef,(M,N))
+    energies_n = []
+    mean_energies_n = []
+    std_en_n = []
+    for i in 1:N
+        energies[:,i] = localEnergy.(walkers, α)
+        # if i%n == 0
+        #     push!(energies_n,mean(energies, dims=1))
+        # end
 
-@time walkers = initWalkers(300)
+        #random step for every walker
+        for w in walkers
+            randomStep = rand(Float64,3).*s.-s/2
+            if rand()<0.5
+                w.posE1 += randomStep
+            else
+                w.posE2 += randomStep
+            end
+        end
+    end
 
-walkers
-@time localEnergy.(walkers, 0.14)
+    # walker_av_energy = [mean(e) for e in energies_n]
+    # wlaker_std_energy = [std(e) for e in energies_n]
+
+
+    return energies
+end
+
+
+
+
+
+walkers = initWalkers(300)
+sList = [0.1, 1.0, 10.0]
+s = sList[2]
+
+@time all_energies = vmc(walkers,s,N,n)
+
+
+
+# av_e = [mean(e) for e in energies_n]
+# display(plot(av_e))
+# display(plot(std_e))
