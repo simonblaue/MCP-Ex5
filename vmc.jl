@@ -32,48 +32,46 @@ function initWalkers(M)
 end
 
 
+function randomStep(w::Walker, s)
+    randomStep = rand(Float64,3).*s.-s/2
+    if rand()<0.5
+        w.posE1 += randomStep
+    else
+        w.posE2 += randomStep
+    end
+end
+
 function vmc(walkers, s, N, n)
     α = 0.15
-    energies = Array{Float64}(undef,(M,N))
-    energies_n = []
-    mean_energies_n = []
-    std_en_n = []
-    for i in 1:N
-        energies[:,i] = localEnergy.(walkers, α)
-        # if i%n == 0
-        #     push!(energies_n,mean(energies, dims=1))
-        # end
+    averagingsteps = floor(Int,N/n)
 
-        #random step for every walker
-        for w in walkers
-            randomStep = rand(Float64,3).*s.-s/2
-            if rand()<0.5
-                w.posE1 += randomStep
-            else
-                w.posE2 += randomStep
-            end
+    n_energies = Array{Float64}(undef,(M,n))
+    av_e = Array{Float64}(undef,(M,averagingsteps))
+
+    for i in 1:averagingsteps
+        for j in 1:n
+            n_energies[:,j] = localEnergy.(walkers, α)
+            randomStep.(walkers, s)
         end
+
+        av_e[:,i] = mean(n_energies, dims=2)
     end
 
-    # walker_av_energy = [mean(e) for e in energies_n]
-    # wlaker_std_energy = [std(e) for e in energies_n]
-
-
-    return energies
+    walkerMean = mean(av_e, dims=1)'
+    walkerStd = std(av_e, dims=1)'
+    
+    return walkerMean, walkerStd
 end
 
 
 
-
+##### MAIN ######
 
 walkers = initWalkers(300)
 sList = [0.1, 1.0, 10.0]
-s = sList[2]
+s = sList[3]
 
-@time all_energies = vmc(walkers,s,N,n)
+@time av_e, std_e = vmc(walkers,s,N,n)
 
-
-
-# av_e = [mean(e) for e in energies_n]
-# display(plot(av_e))
-# display(plot(std_e))
+display(plot(av_e))
+display(plot(std_e))
