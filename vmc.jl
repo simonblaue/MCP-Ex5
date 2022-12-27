@@ -41,8 +41,8 @@ function randomStep(w::Walker, s)
     end
 end
 
-function vmc(walkers, s, N, n)
-    α = 0.15
+function vmc(walkers, s, α, N, n)
+    
     averagingsteps = floor(Int,N/n)
 
     n_energies = Array{Float64}(undef,(M,n))
@@ -62,16 +62,3 @@ function vmc(walkers, s, N, n)
     
     return walkerMean, walkerStd
 end
-
-
-
-##### MAIN ######
-
-walkers = initWalkers(300)
-sList = [0.1, 1.0, 10.0]
-s = sList[3]
-
-@time av_e, std_e = vmc(walkers,s,N,n)
-
-display(plot(av_e))
-display(plot(std_e))
