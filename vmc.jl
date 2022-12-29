@@ -1,5 +1,6 @@
 using LinearAlgebra
 using Statistics
+using LaTeXStrings
 using Plots
 
 const M = 300
@@ -21,6 +22,13 @@ function localEnergy(walker::Walker,α)
     return (κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1 - 2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2 * norm((r₁/norm(r₁) - r₂/norm(r₂)) .* (r₁-r₂)/r₁₂)
 end
 
+function wavefunction(walker::Walker,κ, β, α)
+    r₁ = norm(walker.posE1)
+    r₂ = norm(walker.posE2)
+    r₁₂ = norm(walker.posE1-walker.posE2)
+    return ℯ^(-κ*r₁) * ℯ^(-κ*r₂) * ℯ^(β*r₁₂/(1+α*r₁₂))
+end
+
 function initWalkers(M)
     walkers = Array{Walker}(undef, M)
     for i in 1:M
@@ -32,12 +40,22 @@ function initWalkers(M)
 end
 
 
-function randomStep(w::Walker, s)
-    randomStep = rand(Float64,3).*s.-s/2
+function randomStep(w::Walker, s, α)
+    # propose random step
+    randomStep = s.*(rand(Float64,3).-0.5)
     if rand()<0.5
-        w.posE1 += randomStep
+        wpropose = Walker(w.posE1, w.posE2)
+        wpropose.posE1 += randomStep
     else
-        w.posE2 += randomStep
+        wpropose = Walker(w.posE1, w.posE2)
+        wpropose.posE2 += randomStep
+    end
+    # calc acceptance
+    wfold = wavefunction(w, κ, β, α)
+    wfpropose = wavefunction(wpropose, κ, β, α)
+    if rand() < wfpropose^2/wfold^2
+        w.posE1 = wpropose.posE1
+        w.posE2 = wpropose.posE2
     end
 end
 
@@ -51,7 +69,7 @@ function vmc(walkers, s, α, N, n)
     for i in 1:averagingsteps
         for j in 1:n
             n_energies[:,j] = localEnergy.(walkers, α)
-            randomStep.(walkers, s)
+            randomStep.(walkers, s, α)
         end
 
         av_e[:,i] = mean(n_energies, dims=2)

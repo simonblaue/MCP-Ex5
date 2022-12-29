@@ -31,6 +31,8 @@ labels = [L"s=1" L"s=0.1" L"s=10"]
 p1 = plot(1:30, avEnergies, labels=labels, title="Average Energie")
 p2 = plot(1:30, stdEnergies, labels=labels, title="Standard error Energie")
 
+savefig(p1, "saves/figures/task1a.avEnergies.pdf")
+savefig(p2, "saves/figures/task1a.avStd.pdf")
 display(p1)
 display(p2)
 
