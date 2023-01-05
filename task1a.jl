@@ -1,5 +1,6 @@
 include("vmc.jl")
 using LaTeXStrings
+using Plots
 
 function calcAveandStds()
     M = 300
@@ -7,6 +8,8 @@ function calcAveandStds()
     n = 1000
 
     α = 0.15
+    β = 1/2
+    κ = 2.
 
     sList = [0.1,1.0,10.0]
 
@@ -15,7 +18,7 @@ function calcAveandStds()
 
     for s in sList
         walkers = initWalkers(M)
-        avEnergy, stdEnergy = vmc(walkers, s, α, N, n)
+        avEnergy, stdEnergy = vmc(walkers, s, α,β,κ, N, n)
         push!(avEnergies, avEnergy)
         push!(stdEnergies, stdEnergy)
     end

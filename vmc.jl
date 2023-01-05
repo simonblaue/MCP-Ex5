@@ -13,15 +13,15 @@ mutable struct Walker
     posE2::Vector{Float64}
 end
 
-function localEnergy(walker::Walker,α)
-    r₁ = walker.posE1
-    r₂ = walker.posE2
-    r₁₂ = norm(r₁-r₂)
+function localEnergy(walker::Walker,α, β, κ)
+    r₁ = norm(walker.posE1)
+    r₂ = norm(walker.posE2)
+    r₁₂ = norm(walker.posE1-walker.posE2)
     u = 1 + α*r₁₂
-    return - ((κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1 - 2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2 * norm((r₁/norm(r₁) - r₂/norm(r₂)) .* (r₁-r₂)/r₁₂))
+    return (κ-2)/r₁ + (κ-2)/r₂ + 1/r₁₂ * (1 - 2*β/u^2) + 2*β*α/u^3 - κ^2 - β^2/u^4 + κ*β/u^2 * sum((walker.posE1/r₁ - walker.posE2/r₂) .* (walker.posE1-walker.posE2)/r₁₂)
 end
 
-function wavefunction(walker::Walker,κ, β, α)
+function wavefunction(walker::Walker, α, β, κ)
     r₁ = norm(walker.posE1)
     r₂ = norm(walker.posE2)
     r₁₂ = norm(walker.posE1-walker.posE2)
@@ -38,7 +38,6 @@ function initWalkers(M)
     return walkers
 end
 
-# function E_L()
 
 function randomStep(w::Walker, s, α)
     # propose random step
@@ -50,17 +49,17 @@ function randomStep(w::Walker, s, α)
         wpropose = Walker(w.posE1, w.posE2)
         wpropose.posE2 += randomStep
     end
-    # calc acceptance
-    wfold = wavefunction(w, κ, β, α)
-    wfpropose = wavefunction(wpropose, κ, β, α)
+    # acceptance
+    wfold = wavefunction(w, α, β, κ)
+    wfpropose = wavefunction(wpropose, α, β, κ)
     if rand() < wfpropose^2/wfold^2
         w.posE1 = wpropose.posE1
         w.posE2 = wpropose.posE2
     end
 end
 
-function vmc(walkers, s, α, N, n)
-    
+function vmc(walkers, s, α,β,κ, N, n)
+    # mesurement as average over every n steps
     averagingsteps = floor(Int,N/n)
 
     n_energies = Array{Float64}(undef,(M,n))
@@ -68,7 +67,7 @@ function vmc(walkers, s, α, N, n)
 
     for i in 1:averagingsteps
         for j in 1:n
-            n_energies[:,j] = localEnergy.(walkers, α)
+            n_energies[:,j] = localEnergy.(walkers, α, β, κ)
             randomStep.(walkers, s, α)
         end
 
@@ -82,7 +81,8 @@ function vmc(walkers, s, α, N, n)
 end
 
 function vmc2(walkers, s, α, β, κ, N, n_equi)
-    
+    # measurment as mean after equilibration time
+
     av_e = Array{Float64}(undef,N-n_equi)
     std_e = Array{Float64}(undef,N-n_equi)
 
@@ -93,11 +93,14 @@ function vmc2(walkers, s, α, β, κ, N, n_equi)
 
     # Messurements
     for i in 1:N-n_equi
-            m_energies = localEnergy.(walkers, α)
+            m_energies = localEnergy.(walkers, α, β, κ)
+            # mean over all walkers
             av_e[i] = mean(m_energies)
             std_e[i] = std(m_energies)
             randomStep.(walkers, s, α)
         end
 
+    # mean over all already equilibrated steps
+    # TODO: Is the std correctly calculated?
     return mean(av_e), mean(std_e)
 end

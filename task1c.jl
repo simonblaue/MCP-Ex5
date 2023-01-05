@@ -3,34 +3,42 @@ using LaTeXStrings
 using Plots
 using Measurements
 using ProgressBars
+using CurveFit
 
-function calcElandStd()
+function calcElandStd(αs)
     M = 300
     N = 10000
-    n_equi = 2500
+    n_equi = 3000
     s = 0.1
     κ = 2
     β = 1/2
-    αs = 0:0.05:0.8
 
-    avEnergies = []
-    stdEnergies = []
+    avEnergies = zeros(length(αs))
+    stdEnergies = zeros(length(αs))
 
-    Threads.@threads for α in αs
+    Threads.@threads for (i,α) in collect(enumerate(αs))
         walkers = initWalkers(M)
-        avEnergy, stdEnergy = vmc2(walkers, s, α, β, κ, N, n_equi)
-        push!(avEnergies, avEnergy)
-        push!(stdEnergies, stdEnergy)
+        # avEnergy, stdEnergy = vmc2(walkers, s, α, β, κ, N, n_equi)
+        (avEnergies[i], stdEnergies[i]) = vmc2(walkers, s, α, β, κ, N, n_equi)
+        # push!(stdEnergies, stdEnergy)
     end
 
     return avEnergies, stdEnergies
 end
 
-# @time avEnergies, stdEnergies = calcElandStd()
 
+αs = 0:0.005:0.5
+# @time avEnergies, stdEnergies = calcElandStd(αs)
 
-p1 = plot( 0:0.05:0.8 ,avEnergies .± stdEnergies, title="Energy dependence on α", xlabel=L"α", ylabel=L"E_L", legend=false)
+fit = curve_fit(Polynomial, αs, avEnergies, 2)
+yb = fit.(αs)
+
+p1 = scatter(αs, avEnergies, title="Energy dependence on α", xlabel=L"α", ylabel=L"E_L", label="")
+plot!(αs,yb, color="red", label="Quadratic fit with min at α=$(αs[findmin(yb)[2]])")
+p2 = scatter(αs, stdEnergies, title="Std. of Energies depending on α", xlabel=L"α", ylabel=L"σ_{E_L}", legend=false)
 
 savefig(p1, "saves/figures/task1c.avEnergies.pdf")
-# savefig(p2, "saves/figures/task1c.avStd.pdf")
+savefig(p2, "saves/figures/task1c.avStd.pdf")
+display(p2)
 display(p1)
+

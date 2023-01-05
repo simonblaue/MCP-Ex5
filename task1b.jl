@@ -20,7 +20,7 @@ function calcAveandStds()
 
     for α in αs
         walkers = initWalkers(M)
-        avEnergy, stdEnergy = vmc(walkers, s, α, N, n)
+        avEnergy, stdEnergy = vmc(walkers, s, α,β,κ, N, n)
         push!(avEnergies, avEnergy)
         push!(stdEnergies, stdEnergy)
     end
@@ -29,13 +29,18 @@ function calcAveandStds()
 end
 
 
-@time avEnergies, stdEnergies = calcAveandStds()
+# @time avEnergies, stdEnergies = calcAveandStds()
 
 
 labels = [L"\alpha = 0." L"\alpha = 0.1" L"\alpha = 0.2" L"\alpha = 0.3" L"\alpha = 0.4" L"\alpha = 0.5"]
-p1 = plot(1:10, avEnergies, labels=labels, title="Average Energie")
-p2 = plot(1:10, stdEnergies, labels=labels, title="Standard error Energie")
+p1 = plot(1:1000:10000, avEnergies, labels=labels, title="Average Energie")
+vline!([2500], color="black", label=L"Equilbration seperation at $N=2500$")
+xlabel!(L"Steps $N$")
+ylabel!(L"Energy $⟨E_L⟩$")
 
+p2 = plot(1:10, stdEnergies, labels=labels, title="Standard error Energie")
+xlabel!(L"Steps $N$")
+ylabel!(L"Std. of Energy $σ_{⟨E_L⟩}$")
 
 savefig(p1, "saves/figures/task1b.avEnergies.pdf")
 savefig(p2, "saves/figures/task1b.avStd.pdf")
