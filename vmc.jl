@@ -14,6 +14,7 @@ mutable struct Walker
 end
 
 function localEnergy(walker::Walker,α, β, κ)
+    # TODO: Whats going on here looks fine for me but κ variation is wierd
     r₁ = norm(walker.posE1)
     r₂ = norm(walker.posE2)
     r₁₂ = norm(walker.posE1-walker.posE2)
@@ -96,7 +97,7 @@ function vmc2(walkers, s, α, β, κ, N, n_equi)
             m_energies = localEnergy.(walkers, α, β, κ)
             # mean over all walkers
             av_e[i] = mean(m_energies)
-            std_e[i] = std(m_energies)
+            std_e[i] = √((mean(m_energies.^2)-mean(m_energies)^2)/ M)
             randomStep.(walkers, s, α)
         end
 
