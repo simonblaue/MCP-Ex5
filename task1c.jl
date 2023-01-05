@@ -18,9 +18,7 @@ function calcElandStd(αs)
 
     Threads.@threads for (i,α) in collect(enumerate(αs))
         walkers = initWalkers(M)
-        # avEnergy, stdEnergy = vmc2(walkers, s, α, β, κ, N, n_equi)
         (avEnergies[i], stdEnergies[i]) = vmc2(walkers, s, α, β, κ, N, n_equi)
-        # push!(stdEnergies, stdEnergy)
     end
 
     return avEnergies, stdEnergies
