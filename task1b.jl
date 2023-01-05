@@ -1,5 +1,6 @@
 include("vmc.jl")
 using LaTeXStrings
+using Plots
 
 function calcAveandStds()
     M = 300
@@ -7,6 +8,10 @@ function calcAveandStds()
     n = 1000
 
     s = 0.1
+
+    κ = 2
+    β = 1/2
+    
     αs =[0., 0.1, 0.2, 0.3, 0.4, 0.5]
 
 
@@ -24,7 +29,7 @@ function calcAveandStds()
 end
 
 
-# @time avEnergies, stdEnergies = calcAveandStds()
+@time avEnergies, stdEnergies = calcAveandStds()
 
 
 labels = [L"\alpha = 0." L"\alpha = 0.1" L"\alpha = 0.2" L"\alpha = 0.3" L"\alpha = 0.4" L"\alpha = 0.5"]

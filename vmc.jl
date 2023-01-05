@@ -1,7 +1,5 @@
 using LinearAlgebra
 using Statistics
-using LaTeXStrings
-using Plots
 
 const M = 300
 const β = 1/2
@@ -20,7 +18,7 @@ function localEnergy(walker::Walker,α)
     r₂ = walker.posE2
     r₁₂ = norm(r₁-r₂)
     u = 1 + α*r₁₂
-    return (κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1 - 2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2 * norm((r₁/norm(r₁) - r₂/norm(r₂)) .* (r₁-r₂)/r₁₂)
+    return - ((κ-2)/norm(r₁) + (κ-2)/norm(r₂) + 1/r₁₂ * (1 - 2β/u^2) + 2*β*α/u^3 -κ^2 - β^2/u^4 + κ*β/u^2 * norm((r₁/norm(r₁) - r₂/norm(r₂)) .* (r₁-r₂)/r₁₂))
 end
 
 function wavefunction(walker::Walker,κ, β, α)
@@ -40,7 +38,7 @@ function initWalkers(M)
     return walkers
 end
 
-function E_L()
+# function E_L()
 
 function randomStep(w::Walker, s, α)
     # propose random step
@@ -83,7 +81,7 @@ function vmc(walkers, s, α, N, n)
     return walkerMean, walkerStd
 end
 
-function vmc2(walkers, s, α, N, n)
+function vmc2(walkers, s, α, β, κ, N, n_equi)
     
     av_e = Array{Float64}(undef,N-n_equi)
     std_e = Array{Float64}(undef,N-n_equi)
@@ -95,10 +93,11 @@ function vmc2(walkers, s, α, N, n)
 
     # Messurements
     for i in 1:N-n_equi
-            av_e[i] = mean(localEnergy.(walkers, α))
-            std_e[i]
+            m_energies = localEnergy.(walkers, α)
+            av_e[i] = mean(m_energies)
+            std_e[i] = std(m_energies)
             randomStep.(walkers, s, α)
         end
 
-    return walkerMean, walkerStd
+    return mean(av_e), mean(std_e)
 end
