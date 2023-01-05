@@ -98,19 +98,19 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0)
     E = zeros(M)
     # var =zeros(M)
 
-    #Initalize return arrays
-    returnEnergies = zeros(floor(Int,(N-n_eq)/n))
-    returnStd = zeros(floor(Int,(N-n_eq)/n))
-
-     # run equilibration if any
-     if n_eq>0
+    # run equilibration if any
+    if n_eq>0
         for _ in 1:n_eq
             randomStep.(walkers, s, α, β, κ)
         end
         # when equilibrating I want mean over all steps
         n=N-n_eq
     end
-
+    
+    #Initalize return arrays
+    returnEnergies = zeros(floor(Int,(N-n_eq)/n))
+    returnStd = zeros(floor(Int,(N-n_eq)/n))
+    
     # run main steps
     for i in 1:(N-n_eq)
         # update positions
