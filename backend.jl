@@ -84,7 +84,7 @@ Runs Variational monte calro for helium, returns Energy estimate and its standar
 - `α,β,κ::Float64`: variational parameters
 
 """
-function runSimulation(M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0)
+function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0)
 
     # Initalize M heliumAtoms
     walkers = Array{heliumAtom}(undef, M)
