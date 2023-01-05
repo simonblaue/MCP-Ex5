@@ -31,10 +31,12 @@ end
 # @time avEnergies, stdEnergies = calcElandStd(αs)
 
 fit = curve_fit(Polynomial, αs, avEnergies, 2)
-yb = fit.(αs)
+
+fitα = 0:0.001:0.5
+yb = fit.(fitα)
 
 p1 = scatter(αs, avEnergies, title="Energy dependence on α", xlabel=L"α", ylabel=L"E_L", label="")
-plot!(αs,yb, color="red", label="Quadratic fit with min at α=$(αs[findmin(yb)[2]])")
+plot!(fitα,yb, color="red", label="Quadratic fit with min at α=$(fitα[findmin(yb)[2]])")
 p2 = scatter(αs, stdEnergies, title="Std. of Energies depending on α", xlabel=L"α", ylabel=L"σ_{E_L}", legend=false)
 
 savefig(p1, "saves/figures/task1c.avEnergies.pdf")
