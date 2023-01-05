@@ -31,8 +31,6 @@ end
 
 p1 = plot( 0:0.05:0.8 ,avEnergies .± stdEnergies, title="Energy dependence on α", xlabel=L"α", ylabel=L"E_L", legend=false)
 
-# p2 = scatter( 0:0.05:0.8, stdEnergies, title="Standard error Energie", xlabel=L"α", ylabel=L"E_L", legend=false)
-
 savefig(p1, "saves/figures/task1c.avEnergies.pdf")
 # savefig(p2, "saves/figures/task1c.avStd.pdf")
 display(p1)
