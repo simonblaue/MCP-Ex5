@@ -8,6 +8,7 @@ const β = 1/2
 const κ = 2
 const N = 30000
 const n = 1000
+const n_equi = 2000
 
 mutable struct Walker
     posE1::Vector{Float64}
@@ -39,6 +40,7 @@ function initWalkers(M)
     return walkers
 end
 
+function E_L()
 
 function randomStep(w::Walker, s, α)
     # propose random step
@@ -78,5 +80,25 @@ function vmc(walkers, s, α, N, n)
     walkerMean = mean(av_e, dims=1)'
     walkerStd = std(av_e, dims=1)'
     
+    return walkerMean, walkerStd
+end
+
+function vmc2(walkers, s, α, N, n)
+    
+    av_e = Array{Float64}(undef,N-n_equi)
+    std_e = Array{Float64}(undef,N-n_equi)
+
+    # Equilibration
+    for i in 1:n_equi
+        randomStep.(walkers, s, α)
+    end
+
+    # Messurements
+    for i in 1:N-n_equi
+            av_e[i] = mean(localEnergy.(walkers, α))
+            std_e[i]
+            randomStep.(walkers, s, α)
+        end
+
     return walkerMean, walkerStd
 end

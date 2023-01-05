@@ -24,13 +24,16 @@ function calcAveandStds()
 end
 
 
-@time avEnergies, stdEnergies = calcAveandStds()
+# @time avEnergies, stdEnergies = calcAveandStds()
 
 
 labels = [L"\alpha = 0." L"\alpha = 0.1" L"\alpha = 0.2" L"\alpha = 0.3" L"\alpha = 0.4" L"\alpha = 0.5"]
 p1 = plot(1:10, avEnergies, labels=labels, title="Average Energie")
 p2 = plot(1:10, stdEnergies, labels=labels, title="Standard error Energie")
 
+
+savefig(p1, "saves/figures/task1b.avEnergies.pdf")
+savefig(p2, "saves/figures/task1b.avStd.pdf")
 display(p1)
 display(p2)
 
