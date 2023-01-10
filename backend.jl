@@ -1,6 +1,5 @@
 using Statistics
 using LinearAlgebra
-using ProgressBars
 using Plots
 
 # define a two position struct
@@ -63,7 +62,6 @@ function quantumForce(atom::heliumAtom, α::Float64, β::Float64, κ::Float64)
     #calculate value of trial wave function
     ψ = (ψ1 * ψ2 * exp(β*r₁₂/(1+α*r₁₂)))
 
-
     #TODO: calculate Force
     Fr1 = -2*κ+ 1
     Fr2 = -2*κ+ 1
@@ -71,62 +69,7 @@ function quantumForce(atom::heliumAtom, α::Float64, β::Float64, κ::Float64)
 end
 
 
-# Does a Fokker Plank step for one atom
-# function fokkerPlankStep(atom::heliumAtom, Δτ::Float64,t::Float, α::Float64, β::Float64, κ::Float64)
-    
-#     proposeAtom = heliumAtom(atom.r₁, atom.r₂)
-    
-#     # shift atom according to quantum Force at atom
-#     F = quantumForce(proposeAtom, α, β, κ)
-#     proposeAtom.r₁ += F[1]
-#     proposeAtom.r₂ += F[2]
-    
-#     # shift atom accodring to random shift
-#     randomStepE1 = rand(Float64,3).*(sqrt(2*Δτ))
-#     randomStepE2 = rand(Float64,3).*(sqrt(2*Δτ))
-#     proposeAtom.r₁ += randomStepE1
-#     proposeAtom.r₂ += randomStepE2
-    
-#     # Acceptance for correcting truncation error
-#     ψold = trialWaveFunction(atom, α, β, κ)
-#     ψpropose = trialWaveFunction(wpropose, α, β, κ)
-    
-#     wR2R1 = GreensFunction(proposeAtom, atom, t)
-#     wR1R2 = GreensFunction(atom, proposeAtom, t)
-    
-#     if rand() < wR2R1*ψpropose^2/(wR1R2*ψold^2)
-#         atom.r₁ = wpropose.r₁
-#         atom.r₂ = wpropose.r₂
-#     end
-# end
-
-# Define random step
-function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::Float64, FP=false)
-     # propose random step
-     randomStep = s.*(rand(Float64,3).-0.5)
-     
-    #  if FP
-     # choose one of the electrons randomly
-     if rand()<0.5
-         wpropose = heliumAtom(atom.r₁, atom.r₂)
-         wpropose.r₁ += randomStep
-     else
-         wpropose = heliumAtom(atom.r₁, atom.r₂)
-         wpropose.r₂ += randomStep
-     end
-
-
-     # Calculate acceptance ratio
-     ψold = trialWaveFunction(atom, α, β, κ)
-     ψpropose = trialWaveFunction(wpropose, α, β, κ)
-     if rand() < ψpropose^2/ψold^2
-         atom.r₁ = wpropose.r₁
-         atom.r₂ = wpropose.r₂
-     end
- end
-
- function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, t::Float64)
-
+function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
     pref = 1/(2*π*t)^3 
     # putting elctron positions in handable 6 vecs
     R1 = Vector{Float64}(undef, 6)
@@ -142,29 +85,76 @@ function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::
     F[1:3] = qForce[1]
     F[4:6] = qForce[2]
 
-    exponent = -(R2-R1-(t/2).*F)^2/(2*t)
+    exponent = -(R2-R1-(Δτ/2).*F)^2/(2*Δτ)
 
     # Calculate Greens Function Value
     G = pref * exp(exponent)
 
     return G
-    
 end
+
+# Define random step
+function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::Float64; FP=false, Δτ=0.5)
+
+    # propose a step ( copy old one first)
+    wpropose = heliumAtom(atom.r₁, atom.r₂)
+
+    # Normal VMC
+    if !FP
+        randomStep = s.*(rand(Float64,3).-0.5)
+        # choose one of the electrons randomly
+        if rand()<0.5
+            wpropose = heliumAtom(atom.r₁, atom.r₂)
+            wpropose.r₁ += randomStep
+        else
+            wpropose = heliumAtom(atom.r₁, atom.r₂)
+            wpropose.r₂ += randomStep
+        end
+    
+    # Do Fokker Plank if nessecary
+    else
+        randomStep = sqrt(Δτ/2).*(rand(Float64,3))
+        F = quantumForce(atom, α, β, κ)
+        wpropose.r₁ += randomStep[1:3] + F[1]*Δτ/2
+        wpropose.r₂ += randomStep[4:6] + F[2]*Δτ/2
+    end
+
+    # Calculate acceptance ratio VMC
+    ψold = trialWaveFunction(atom, α, β, κ)
+    ψpropose = trialWaveFunction(wpropose, α, β, κ)
+    acceptance = ψpropose^2/ψold^2
+
+    # Correct acceptance ratio for VMC-FP
+    if FP
+        t = 
+        wR2R1 = GreensFunction(proposeAtom, atom, Δτ)
+        wR1R2 = GreensFunction(atom, proposeAtom, Δτ)
+        acceptance *= wR2R1/wR1R2
+        acceptance = min(1, acceptance)
+    end
+
+    # Take or leave the propsed new position
+    if rand() < acceptance
+         atom.r₁ = wpropose.r₁
+         atom.r₂ = wpropose.r₂
+    end
+ end
+
+
 
 """
 runSimulation(M=300,N=10000,n=1000,n_eq=1,s=0.1,α=0.15,β=0.5,κ=2.0)
 Runs Variational monte calro for helium, returns Energy estimate and its standard deviation every nth step
     
-    # Arguments
-    - `M::Integer`: Number of Monte Carlo walkers
+# Arguments
+- `M::Integer`: Number of Monte Carlo walkers
 - `N::Integer`: Number of integration steps
 - `n::Integer': each measurment step
 - `n_eq::Integer`: Equilibration time
 - `s::Float64`: step size
 - `α,β,κ::Float64`: variational parameters
-
 """
-function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, fokkerplanck=false)
+function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.5)
 
     # Initalize M heliumAtoms
     walkers = Array{heliumAtom}(undef, M)
@@ -181,7 +171,11 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
     # run equilibration if any
     if n_eq>0
         for _ in 1:n_eq
-            randomStep.(walkers, s, α, β, κ)
+            if FP
+                randomStep.(walkers, s, α, β, κ, FP=true, Δτ=Δτ)
+            else
+                randomStep.(walkers, s, α, β, κ)
+            end
         end
         # when equilibrating I want mean over all steps
         n=N-n_eq
@@ -194,7 +188,11 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
     # run main steps
     for i in 1:(N-n_eq)
         # update positions
-        randomStep.(walkers, s, α, β, κ)
+        if FP
+            randomStep.(walkers, s, α, β, κ, FP=true, Δτ=Δτ)
+        else
+            randomStep.(walkers, s, α, β, κ)
+        end
 
         # Update energy and variance mean over all walkers
         E_new  = localEnergy.(walkers, α, β, κ)
