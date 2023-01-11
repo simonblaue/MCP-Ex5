@@ -1,6 +1,7 @@
 using Statistics
 using LinearAlgebra
-using Plots
+using ProgressMeter
+
 
 # define a two position struct
 mutable struct heliumAtom
@@ -55,22 +56,15 @@ function quantumForce(atom::heliumAtom, α::Float64, β::Float64, κ::Float64)
     r₂ = norm(atom.r₂)
     r₁₂ = norm(atom.r₁-atom.r₂)
 
-    #calculate single electron terms
-    ψ1 = exp(-κ*r₁)
-    ψ2 = exp(-κ*r₂)
+    F1 = -κ/r₁ * atom.r₁ + β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) - α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
+    F2 = -κ/r₂ * atom.r₂ - β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) + α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
 
-    #calculate value of trial wave function
-    ψ = (ψ1 * ψ2 * exp(β*r₁₂/(1+α*r₁₂)))
-
-    #TODO: calculate Force
-    Fr1 = -2*κ+ 1
-    Fr2 = -2*κ+ 1
-    return [Fr1,Fr2]
+    return [F1,F2]
 end
 
 
 function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
-    pref = 1/(2*π*t)^3 
+    pref = 1/(2*π*Δτ)^3 
     # putting elctron positions in handable 6 vecs
     R1 = Vector{Float64}(undef, 6)
     R1[1:3] = atom1.r₁
@@ -85,7 +79,7 @@ function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
     F[1:3] = qForce[1]
     F[4:6] = qForce[2]
 
-    exponent = -(R2-R1-(Δτ/2).*F)^2/(2*Δτ)
+    exponent = -sum((R2-R1-(Δτ/2).*F).^2)/(2*Δτ)
 
     # Calculate Greens Function Value
     G = pref * exp(exponent)
@@ -97,36 +91,35 @@ end
 function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::Float64; FP=false, Δτ=0.5)
 
     # propose a step ( copy old one first)
-    wpropose = heliumAtom(atom.r₁, atom.r₂)
+    proposeAtom = heliumAtom(atom.r₁, atom.r₂)
 
     # Normal VMC
     if !FP
         randomStep = s.*(rand(Float64,3).-0.5)
         # choose one of the electrons randomly
         if rand()<0.5
-            wpropose = heliumAtom(atom.r₁, atom.r₂)
-            wpropose.r₁ += randomStep
+            proposeAtom = heliumAtom(atom.r₁, atom.r₂)
+            proposeAtom.r₁ += randomStep
         else
-            wpropose = heliumAtom(atom.r₁, atom.r₂)
-            wpropose.r₂ += randomStep
+            proposeAtom = heliumAtom(atom.r₁, atom.r₂)
+            proposeAtom.r₂ += randomStep
         end
     
     # Do Fokker Plank if nessecary
     else
-        randomStep = sqrt(Δτ/2).*(rand(Float64,3))
+        randomStep = sqrt(Δτ/2).*(rand(Float64,6))
         F = quantumForce(atom, α, β, κ)
-        wpropose.r₁ += randomStep[1:3] + F[1]*Δτ/2
-        wpropose.r₂ += randomStep[4:6] + F[2]*Δτ/2
+        proposeAtom.r₁ += randomStep[1:3] + F[1]*Δτ/2
+        proposeAtom.r₂ += randomStep[4:6] + F[2]*Δτ/2
     end
 
     # Calculate acceptance ratio VMC
     ψold = trialWaveFunction(atom, α, β, κ)
-    ψpropose = trialWaveFunction(wpropose, α, β, κ)
+    ψpropose = trialWaveFunction(proposeAtom, α, β, κ)
     acceptance = ψpropose^2/ψold^2
 
     # Correct acceptance ratio for VMC-FP
     if FP
-        t = 
         wR2R1 = GreensFunction(proposeAtom, atom, Δτ)
         wR1R2 = GreensFunction(atom, proposeAtom, Δτ)
         acceptance *= wR2R1/wR1R2
@@ -135,26 +128,13 @@ function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::
 
     # Take or leave the propsed new position
     if rand() < acceptance
-         atom.r₁ = wpropose.r₁
-         atom.r₂ = wpropose.r₂
+         atom.r₁ = proposeAtom.r₁
+         atom.r₂ = proposeAtom.r₂
     end
- end
+end
 
-
-
-"""
-runSimulation(M=300,N=10000,n=1000,n_eq=1,s=0.1,α=0.15,β=0.5,κ=2.0)
-Runs Variational monte calro for helium, returns Energy estimate and its standard deviation every nth step
-    
-# Arguments
-- `M::Integer`: Number of Monte Carlo walkers
-- `N::Integer`: Number of integration steps
-- `n::Integer': each measurment step
-- `n_eq::Integer`: Equilibration time
-- `s::Float64`: step size
-- `α,β,κ::Float64`: variational parameters
-"""
-function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.5)
+# Run the VMC(-FP) Algortihm
+function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.5, p::Progress)
 
     # Initalize M heliumAtoms
     walkers = Array{heliumAtom}(undef, M)
@@ -176,6 +156,7 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
             else
                 randomStep.(walkers, s, α, β, κ)
             end
+            next!(p)
         end
         # when equilibrating I want mean over all steps
         n=N-n_eq
@@ -215,6 +196,7 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
             E .= 0.0
         end
 
+        next!(p)
     end
 
     return returnEnergies,returnStd
