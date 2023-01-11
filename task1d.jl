@@ -8,11 +8,11 @@ using LsqFit
 
 N = 10000
 M = 300
-s = 0.1
+s = 1.0
 α = 0.16
 β = 0.5
 κs = 1.7:0.005:2.2
-NEQ = 4000
+NEQ = 3000
 n = N-NEQ
 
 
@@ -30,10 +30,10 @@ function calculateResults(varyparam)
     return avEs, stds
 end
 
-# @time avEs, stds = calculateResults(κs)
+@time avEs, stds = calculateResults(κs)
 
-@. model(x,p) = p[1]*x^(1)+p[2]*x^(2)+p[3]*x^(3)+p[4]*x^(4)+p[5]
-p0 = zeros(5)
+@. model(x,p) = p[1]*x^(1)+p[2]*x^(2)+p[3]*x^(3)+p[4]
+p0 = zeros(4)
 
 fitEnergies = curve_fit(model, κs, avEs, p0)
 fitStds = curve_fit(model, κs, stds, p0)

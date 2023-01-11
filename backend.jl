@@ -59,7 +59,7 @@ function quantumForce(atom::heliumAtom, α::Float64, β::Float64, κ::Float64)
     F1 = -κ/r₁ * atom.r₁ + β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) - α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
     F2 = -κ/r₂ * atom.r₂ - β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) + α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
 
-    return [F1,F2]
+    return [2*F1,2*F2]
 end
 
 

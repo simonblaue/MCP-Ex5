@@ -6,9 +6,11 @@ using ProgressMeter
 using Distributed
 using LsqFit
 
+# TODO: variier über alle drei parameter gleichzeitig whoop whoop
+
 N = 10000
 M = 300
-s = 0.1
+s = 1.0
 α = 0.18
 β = 0.38
 κ = 1.85

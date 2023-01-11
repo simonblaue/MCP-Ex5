@@ -7,7 +7,7 @@ using Distributed
 
 N = 10000
 M = 300
-s = 0.1
+s = 1.0
 αs = [0., 0.1, 0.2, 0.3, 0.4, 0.5]
 β = 0.5
 κ = 2.0
@@ -33,7 +33,8 @@ end
 
 labels = [L"\alpha = 0." L"\alpha = 0.1" L"\alpha = 0.2" L"\alpha = 0.3" L"\alpha = 0.4" L"\alpha = 0.5"]
 p1 = plot(1:n:N-NEQ,avEs', label=labels)
-vline!([4000], color="black", label=L"Equilbration seperation at $N=4000$")
+neq = 2000
+vline!([neq], color="black", label=L"Equilbration seperation at $N=$%$neq")
 xlabel!("Steps")
 ylabel!("Mean Energy")
 title!("Mean energies")
