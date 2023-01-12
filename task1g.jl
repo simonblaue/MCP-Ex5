@@ -12,7 +12,7 @@ s = 1.0
 α = 0.18
 β = 0.38
 κ = 1.85
-NEQ = 4000
+NEQ = 2000
 n = N-NEQ
 
 FP = true
@@ -33,15 +33,19 @@ function calculateResults(varyparam)
 end
 
 
-@time avEs, stds = calculateResults(Δτs)
+# @time avEs, stds = calculateResults(Δτs)
 
 
 p1 = scatter(Δτs, avEs.±stds, label="", mc="darkblue")
+xaxis!(:log)
+xticks!(Δτs, string.(Δτs))
 title!("Energy dependence on Δτ")
 xlabel!(L"Δτ")
 ylabel!(L"\bar{E}_L")
 
 p2 = scatter(Δτs, stds, mc="darkblue", label="")
+xaxis!(:log)
+xticks!(Δτs, string.(Δτs))
 title!("Std dependence on Δτ")
 xlabel!(L"Δτ")
 ylabel!(L"\bar{E}_L")
