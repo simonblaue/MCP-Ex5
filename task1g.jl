@@ -33,7 +33,7 @@ function calculateResults(varyparam)
 end
 
 
-# @time avEs, stds = calculateResults(Δτs)
+@time avEs, stds = calculateResults(Δτs)
 
 
 p1 = scatter(Δτs, avEs.±stds, label="", mc="darkblue")

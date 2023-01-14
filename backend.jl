@@ -55,16 +55,17 @@ function quantumForce(atom::heliumAtom, α::Float64, β::Float64, κ::Float64)
     r₁ = norm(atom.r₁)
     r₂ = norm(atom.r₂)
     r₁₂ = norm(atom.r₁-atom.r₂)
+    
+    u = 1+α*r₁₂
 
-    F1 = -κ/r₁ * atom.r₁ + β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) - α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
-    F2 = -κ/r₂ * atom.r₂ - β/(r₁₂*(1+α*r₁₂)) * (atom.r₁-atom.r₂) + α*β/(1+α*r₁₂)^2 * (atom.r₁-atom.r₂)
+    F1 = 2 * (-κ/r₁ * atom.r₁ + β*( 1/(r₁₂*u)  - α/u^2) * (atom.r₁-atom.r₂))
+    F2 = 2 * (-κ/r₂ * atom.r₂ - β*( 1/(r₁₂*u)  - α/u^2) * (atom.r₁-atom.r₂))
 
-    return [2*F1,2*F2]
+    return [F1,F2]
 end
 
 
 function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
-    pref = 1/(2*π*Δτ)^3 
     # putting elctron positions in handable 6 vecs
     R1 = Vector{Float64}(undef, 6)
     R1[1:3] = atom1.r₁
@@ -79,9 +80,10 @@ function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
     F[1:3] = qForce[1]
     F[4:6] = qForce[2]
 
-    exponent = -sum((R2-R1-(Δτ/2).*F).^2)/(2*Δτ)
+    exponent = -norm(R2-R1-(Δτ/2)*F)^2 / (2Δτ)
 
     # Calculate Greens Function Value
+    pref = (2*π*Δτ)^-3 
     G = pref * exp(exponent)
 
     return G
