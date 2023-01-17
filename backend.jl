@@ -71,8 +71,8 @@ function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
     R1[1:3] = atom1.r₁
     R1[4:6] = atom1.r₂
     R2 = Vector{Float64}(undef, 6)
-    R2[1:3] = atom1.r₁
-    R2[4:6] = atom1.r₂
+    R2[1:3] = atom2.r₁
+    R2[4:6] = atom2.r₂
 
     # Calcute exponent
     F = Vector{Float64}(undef, 6)
@@ -80,7 +80,7 @@ function GreensFunction(atom1::heliumAtom, atom2::heliumAtom, Δτ::Float64)
     F[1:3] = qForce[1]
     F[4:6] = qForce[2]
 
-    exponent = -norm(R2-R1-(Δτ/2)*F)^2 / (2Δτ)
+    exponent = -norm(R1-R2-(Δτ/2)*F)^2 / (2Δτ)
 
     # Calculate Greens Function Value
     pref = (2*π*Δτ)^-3 
@@ -109,7 +109,7 @@ function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::
     
     # Do Fokker Plank if nessecary
     else
-        randomStep = sqrt(Δτ/2).*(rand(Float64,6))
+        randomStep = sqrt(Δτ/2)*(rand(Float64,6))
         F = quantumForce(atom, α, β, κ)
         proposeAtom.r₁ += randomStep[1:3] + F[1]*Δτ/2
         proposeAtom.r₂ += randomStep[4:6] + F[2]*Δτ/2
@@ -136,7 +136,7 @@ function randomStep(atom::heliumAtom, s::Float64, α::Float64, β::Float64, κ::
 end
 
 # Run the VMC(-FP) Algortihm
-function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.5, p::Progress)
+function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.5, p::Progress, walkersReturn=false)
 
     # Initalize M heliumAtoms
     walkers = Array{heliumAtom}(undef, M)
@@ -162,6 +162,7 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
         end
         # when equilibrating I want mean over all steps
         n=N-n_eq
+        println("Done equilibrating!")
     end
     
     #Initalize return arrays
@@ -199,6 +200,10 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
         end
 
         next!(p)
+    end
+
+    if walkersReturn
+        return walkers
     end
 
     return returnEnergies,returnStd
