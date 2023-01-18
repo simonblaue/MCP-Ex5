@@ -71,7 +71,7 @@ end
 
 function FPStep(R::Vector{Vector{Float64}};α=0.16, β=0.5, κ=2.0, Δτ=0.01)
     Rnew = copy(R)
-    randomStep = sqrt(Δτ/2)*[rand(Float64,3),rand(Float64,3)]
+    randomStep = sqrt(Δτ/2)*[randn(Float64,3),randn(Float64,3)]
     F = quantumForce(Rnew; α, β, κ)
     Rnew += randomStep + F*Δτ/2
 

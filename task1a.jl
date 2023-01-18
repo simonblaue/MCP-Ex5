@@ -29,7 +29,7 @@ function calculateResults(s_list)
     return avEs, stds
 end
 
-# @time avEs, stds = calculateResults(s_list)
+@time avEs, stds = calculateResults(s_list)
 
 display(stds[1][end])
 display(stds[2][end])

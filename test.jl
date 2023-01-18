@@ -21,4 +21,4 @@ p = Progress(N)
 Ets = runSimulation(; M, N, n, n_eq=NEQ, s, α, β, κ, Δτ, E₀, p, walkersReturn)
 
 plt = plot(Ets)
-display(plt)
+# display(plt)
