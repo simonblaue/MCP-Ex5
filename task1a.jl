@@ -29,7 +29,7 @@ function calculateResults(s_list)
     return avEs, stds
 end
 
-@time avEs, stds = calculateResults(s_list)
+# @time avEs, stds = calculateResults(s_list)
 
 display(stds[1][end])
 display(stds[2][end])
@@ -38,12 +38,12 @@ display(stds[3][end])
 labels = [L"s=0.1" L"s=1.0" L"s=10.0"]
 p1 = plot(1:n:N-NEQ,avEs', label=labels)
 xlabel!("Steps")
-ylabel!("Mean Energy")
+ylabel!(L"$\langle E_L^{1000} \rangle$")
 title!("Mean energies")
 
 p2 = plot(1:n:N-NEQ,stds', label=labels)
 xlabel!("Steps")
-ylabel!("Mean Energy")
+ylabel!(L"$σ(\langle E_L^{1000} \rangle )$")
 title!("Std error")
 
 savefig(p1, "saves/task1a.energies.pdf")
