@@ -94,6 +94,10 @@ end
 function branching(walkers::Vector{Vector{Float64}}, ET::Float64)
     # q <= 1 -> walker survives with prob q, death with 1-q
     # q >  1 -> birth to m new walkers m= floor(Int, q+r) with r∈[0,1] random
+
+    maxM = 600
+    minM = 150
+
     EL = localEnergy.(walkers)
     q = exp.(-Δτ*(EL .- ET))
     r = rand(length(q))
@@ -101,30 +105,27 @@ function branching(walkers::Vector{Vector{Float64}}, ET::Float64)
     survivers = walkers[ q .> r ]
     breeders = walkers[q .> 1]
 
-    breeder_q = q[q .> 1]
+    breeders_q = q[q .> 1]
 
-    m = floor.(Int,breeder_q + rand(length(breeders)))
+    m = floor.(Int,breeders_q + rand(length(breeders)))
 
-    println(length(walkers)-length(survivers))
-
-    for i in 1:length(breeders)
+    for (i,b) in enumerate(breeders)
         for _ in 1:m[i]
-            push!(survivers, copy(breeders[i]))
+            push!(survivers, copy(b))
         end
     end
 
+    # M_new = length(survivers)
 
-    M_new = length(survivers)
-
-    if M_new>M 
-        diff = M_new-M
-        indizes = rand(1:length(survivers), diff)
-        survivers = survivers[indizes]
-    else
-        for _ in M-M_new
-            push!(survivers, rand(Float64, 6).-0.5)
-        end
-    end
+    # if M_new>maxM
+    #     diff = M_new-maxM
+    #     indizes = rand(1:length(survivers), M_new-diff)
+    #     survivers = survivers[indizes]
+    # else
+    #     for _ in minM-M_new
+    #         push!(survivers, rand(Float64, 6).-0.5)
+    #     end
+    # end
 
     return survivers
 end
@@ -136,7 +137,6 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0,
         walkers[i] = rand(Float64, 6).-0.5
     end
 
- 
     # Initalize Energy and variance for each walker:
 
     ET = E₀
@@ -147,12 +147,9 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0,
             FPStep.(walkers)
             # Do Brancing
             walkers = branching(walkers, ET)
-            ET = E₀ + a/Δτ*log(M,lenght(walkers))            
+            ET = E₀ + a/Δτ*log(M,length(walkers))            
             next!(p)
         end
-        # when equilibrating I want mean over all steps
-        n = N-n_eq
-        println("Done equilibrating!")
     end
     
     #Initalize return arrays
@@ -161,6 +158,11 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0,
     
     # run main steps
     for i in 1:(N-n_eq)
+        if length(walkers) > 30000
+            j = floor(Int,i/n)
+            returnEnergies[j] = ET
+            return returnEnergies[1:j]
+        end
         # Do FP step
         FPStep.(walkers)
         # Do Brancing
