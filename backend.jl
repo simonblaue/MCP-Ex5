@@ -64,14 +64,14 @@ function vmcStep(R::Vector{Vector{Float64}}; s=1.0, α=0.16, β=0.5, κ=2.0)
     ψold = trialWaveFunction(R; α, β, κ)
     ψpropose = trialWaveFunction(Rnew; α, β, κ)
     if rand() < ψpropose^2/ψold^2
-        return Rnew
+        return  Rnew
     end
     return R
 end
 
 function FPStep(R::Vector{Vector{Float64}};α=0.16, β=0.5, κ=2.0, Δτ=0.01)
     Rnew = copy(R)
-    randomStep = sqrt(Δτ/2)*[randn(Float64,3),randn(Float64,3)]
+    randomStep = sqrt(Δτ)*[randn(Float64,3),randn(Float64,3)]
     F = quantumForce(Rnew; α, β, κ)
     Rnew += randomStep + F*Δτ/2
 
@@ -94,6 +94,9 @@ function initWalkers(;M=300)
 end
 
 
+
+
+
 # Run the Algortihm
 function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0, FP=false, Δτ=0.01, walkersReturn=false, p::Progress)
 
@@ -104,9 +107,9 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
     if n_eq>0
         for _ in 1:n_eq
             if FP
-                @. walkers = FPStep(walkers; α, β, κ, Δτ)
+               walkers = FPStep.(walkers; α, β, κ, Δτ)
             else
-                @. walkers = vmcStep(walkers; s, α, β, κ)
+                walkers = vmcStep.(walkers; s, α, β, κ)
             end
             next!(p)
         end
@@ -124,9 +127,9 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
     for i in 1:(N-n_eq)
         # update positions
         if FP
-            @. walkers = FPStep(walkers; α, β, κ, Δτ)
+            walkers = FPStep.(walkers; α, β, κ, Δτ)
         else
-            @. walkers = vmcStep(walkers; s, α, β, κ)
+            walkers = vmcStep.(walkers; s, α, β, κ)
         end
 
         # Update energy and variance mean over all walkers
@@ -160,4 +163,3 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=0.1,α=0.15,β=0.5,κ=2.0,
     return returnEnergies,returnStd
 
 end
-

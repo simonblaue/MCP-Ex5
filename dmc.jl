@@ -65,109 +65,98 @@ end
 
 
 # Define random step
-function FPStep(R::Vector{Float64}; s=1.0, α=0.16, β=0.5, κ=2.0, Δτ=0.5)
+function FPStep(R::Vector{Float64}; α=0.16, β=0.5, κ=2.0, Δτ=0.5)
 
     # propose a step ( copy old one first)
     proposeR = copy(R)
  
-    randomStep = sqrt(Δτ/2)*(rand(Float64,6))
+    randomStep = sqrt(Δτ)*(randn(Float64,6))
     F = quantumForce(R)
     proposeR += randomStep + F*Δτ/2
 
     # Calculate acceptance ratio VMC
-    ψold = trialWaveFunction(R)
-    ψpropose = trialWaveFunction(proposeR)
+    ψold = trialWaveFunction(R; α, β, κ)
+    ψpropose = trialWaveFunction(proposeR; α, β, κ)
     acceptance = ψpropose^2/ψold^2
 
     # Correct acceptance ratio
-    wR2R1 = GreensFunction(proposeR, R)
-    wR1R2 = GreensFunction(R, proposeR)
+    wR2R1 = GreensFunction(proposeR, R; α, β, κ, Δτ)
+    wR1R2 = GreensFunction(R, proposeR; α, β, κ, Δτ)
     acceptance *= wR2R1/wR1R2
     acceptance = min(1, acceptance)
 
     # Take or leave the propsed new position
     if rand() < acceptance
-         R = proposeR
+         return proposeR
     end
+    return R
 end
 
-function branching(walkers::Vector{Vector{Float64}}, ET::Float64)
+function branching(walkers::Vector{Vector{Float64}}, ET::Float64, acc_idx::BitVector)
     # q <= 1 -> walker survives with prob q, death with 1-q
     # q >  1 -> birth to m new walkers m= floor(Int, q+r) with r∈[0,1] random
 
-    maxM = 600
-    minM = 150
+    walkers_iq = walkers[acc_idx]
 
-    EL = localEnergy.(walkers)
+    EL = localEnergy.(walkers_iq)
     q = exp.(-Δτ*(EL .- ET))
     r = rand(length(q))
 
-    survivers = walkers[ q .> r ]
-    breeders = walkers[q .> 1]
+    survivers = walkers_iq[ q .> r ]
+    breeders = walkers_iq[q .> 1]
 
     breeders_q = q[q .> 1]
 
-    m = floor.(Int,breeders_q + rand(length(breeders)))
+    m = floor.(breeders_q + rand(length(breeders)))
 
     for (i,b) in enumerate(breeders)
         for _ in 1:m[i]
             push!(survivers, copy(b))
         end
     end
-
-    # M_new = length(survivers)
-
-    # if M_new>maxM
-    #     diff = M_new-maxM
-    #     indizes = rand(1:length(survivers), M_new-diff)
-    #     survivers = survivers[indizes]
-    # else
-    #     for _ in minM-M_new
-    #         push!(survivers, rand(Float64, 6).-0.5)
-    #     end
-    # end
-
-    return survivers
+    return append!(survivers, walkers[.!acc_idx])
 end
 
-function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0, Δτ=0.5, E₀=-2.99, p::Progress, walkersReturn=false)
-    # Initalize M heliumAtoms
-    walkers = Vector{Vector{Float64}}(undef, M)
+
+function initWalkers(M=300)
+    walkers = Vector{Vector{Float64}}(undef,M)
     for i in 1:M
         walkers[i] = rand(Float64, 6).-0.5
     end
+    return walkers
+end
 
-    # Initalize Energy and variance for each walker:
+function runSimulation(;M=300,N=10000,n=1000,n_eq=0,α=0.16,β=0.5,κ=2.0, Δτ=0.5, E₀=-2.99, p::Progress, walkersReturn=false)
+    # Initalize M heliumAtoms
+    walkers = initWalkers(M)
 
+    # Initalize Energy
     ET = E₀
-      # run equilibration if any
+    # run equilibration if any
     if n_eq>0
         for _ in 1:n_eq
             # Do FP step
-            FPStep.(walkers)
+            newwalkers = FPStep.(walkers; α, β, κ, Δτ)
+            acc_idx = walkers .!= newwalkers
             # Do Brancing
-            walkers = branching(walkers, ET)
-            ET = E₀ + a/Δτ*log(M,length(walkers))            
+            walkers = branching(newwalkers, ET, acc_idx)
+            ET = E₀ + a/Δτ*log(M/length(walkers))            
             next!(p)
         end
     end
     
     #Initalize return arrays
     returnEnergies = zeros(floor(Int,(N-n_eq)/n))
-    # returnStd = zeros(floor(Int,(N-n_eq)/n))
+    returnNumWalkers = zeros(floor(Int,(N-n_eq)/n))
     
     # run main steps
     for i in 1:(N-n_eq)
-        if length(walkers) > 30000
-            j = floor(Int,i/n)
-            returnEnergies[j] = ET
-            return returnEnergies[1:j]
-        end
         # Do FP step
-        FPStep.(walkers)
+        newwalkers = FPStep.(walkers; α, β, κ, Δτ)
+        acc_idx = walkers .!= newwalkers
         # Do Brancing
-        walkers = branching(walkers, ET)
-        ET = E₀ + a/Δτ*log(M,length(walkers))            
+        walkers = branching(newwalkers, ET, acc_idx)
+        ET = E₀ + a/Δτ*log(M/length(walkers))            
         next!(p)
 
         # push into return arrays 
@@ -175,6 +164,7 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0,
             # calc index
             j = floor(Int,i/n)
             returnEnergies[j] = ET
+            returnNumWalkers[j] = length(walkers)
         end
         next!(p)
     end
@@ -183,7 +173,7 @@ function runSimulation(;M=300,N=10000,n=1000,n_eq=0,s=1.0,α=0.16,β=0.5,κ=2.0,
         return walkers
     end
 
-    return returnEnergies
+    return returnEnergies, returnNumWalkers
 
 end
 

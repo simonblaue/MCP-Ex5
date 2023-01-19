@@ -1,4 +1,4 @@
-include("backend.jl")
+include("vmc.jl")
 using Plots
 using LaTeXStrings
 using Measurements
