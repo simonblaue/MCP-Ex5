@@ -33,18 +33,7 @@ function calculatePositions(walkers)
     return pos_list
 end
 
-# function calculateProbDistri(walkers)
-#     probs = zeros(length(walkers))
-#     for (i,w) in enumerate(walkers)
-#         probs[i] = trialWaveFunction(w, α, β, κ)^2
-#     end
-
-#     return probs
-# end
-
 res = calculatePositions(walkers)
-
-# res = calculateProbDistri(walkers)
 
 h = fit(Histogram, res, nbins=60)
 h = normalize(h, mode=:pdf)

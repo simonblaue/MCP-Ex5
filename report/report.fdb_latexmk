@@ -1,11 +1,11 @@
 # Fdb version 4
-["biber report"] 1674120778 "report.bcf" "report.bbl" "report" 1674120870 0
-  "report.bcf" 1674120870 107181 ee89670663bd0dfd360ee01882d53f40 "pdflatex"
+["biber report"] 1674212380 "report.bcf" "report.bbl" "report" 1674212385 0
+  "report.bcf" 1674212385 107181 ee89670663bd0dfd360ee01882d53f40 "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1674120868 "/Users/simonblaue/ownCloud/Master/Methods for Computaional Physics/Exercises/Ex5/report/report.tex" "report.pdf" "report" 1674120870 0
+["pdflatex"] 1674212384 "/Users/simonblaue/ownCloud/Master/Methods for Computaional Physics/Exercises/Ex5/report/report.tex" "report.pdf" "report" 1674212385 0
   "../saves/task1a.energies.pdf" 1674120868 19215 c389171938e926e0debcd3c33787af32 ""
   "../saves/task1a.stds.pdf" 1674120868 18565 74befaa462f1a7f863f72c41ee5b867d ""
   "../saves/task1b.energies.pdf" 1674053401 23355 980aaee0b07f32a522faa8645955a0ff ""
@@ -14,8 +14,8 @@
   "../saves/task1c.avStd.pdf" 1673448148 23092 9770651f28215ce7d7e4e3e5d495766e ""
   "../saves/task1d.avEnergies.pdf" 1673448270 23143 fe97b6b163fb694c8d8acaa5cd009888 ""
   "../saves/task1d.avStd.pdf" 1673448270 21286 29fb3b690dcf088d07331004c43740fb ""
-  "../saves/task1g.avEnergies.pdf" 1674120082 12386 42c03ce5089aee81681f788e94b820f4 ""
-  "../saves/task1g.avStd.pdf" 1674120082 10238 00f278c4ec8abe767266a505986cc028 ""
+  "../saves/task1g.avEnergies.pdf" 1674212379 12428 b58ff57f075d4622074add17640e5cb0 ""
+  "../saves/task1g.avStd.pdf" 1674212379 11001 cd3298bfe28b17c47e94e7d0f989aea8 ""
   "/Users/simonblaue/ownCloud/Master/Methods for Computaional Physics/Exercises/Ex5/report/report.tex" 1673532630 5320 a89a5bd1226db8d3b203a6c29ede1725 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/xcharter/xch_rydp4l.enc" 1645915288 3163 21e525d33df21a14ca1957bee2a40288 ""
@@ -194,10 +194,10 @@
   "/usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt" 1670364029 3063377 59dbcd150b7bd1208c74dca8334632c4 ""
   "/usr/local/texlive/2022/texmf.cnf" 1647878952 577 209b46be99c9075fd74d4c0369380e8c ""
   "CSUniSchoolLabReport.cls" 1671443518 3407 2cc2d7d606ef08e6dd653c31a7b5bc59 ""
-  "report.aux" 1674120870 7832 8e87a6fe86849c666217b066f2edc527 "pdflatex"
-  "report.bbl" 1674120780 466 ee04f40f768daeed26442158e95aba61 "biber report"
-  "report.out" 1674120870 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "report.run.xml" 1674120870 2318 37acc5ae502c9c8ca2219f3ed8869c2f "pdflatex"
+  "report.aux" 1674212385 7832 8e87a6fe86849c666217b066f2edc527 "pdflatex"
+  "report.bbl" 1674212382 466 ee04f40f768daeed26442158e95aba61 "biber report"
+  "report.out" 1674212385 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "report.run.xml" 1674212385 2318 37acc5ae502c9c8ca2219f3ed8869c2f "pdflatex"
   "report.tex" 1673532630 5320 a89a5bd1226db8d3b203a6c29ede1725 ""
   (generated)
   "report.aux"
