@@ -2,97 +2,70 @@
 using LinearAlgebra
 using ProgressMeter
 
-function trialWaveFunction(R::Vector{Float64}; α=0.16, β=0.5, κ=2.0)
-    Re1 = R[1:3]
-    Re2 = R[4:6]
-    r₁ = norm(Re1)
-    r₂ = norm(Re2)
-    r₁₂ = norm(Re1-Re2)
-
+function trialWaveFunction(R::Vector{Vector{Float64}}; α=0.16, β=0.5, κ=2.0)
+    r₁ = norm(R[1])
+    r₂ = norm(R[2])
+    r₁₂ = norm(R[1]-R[2])
     ψ1 = exp(-κ*r₁)
     ψ2 = exp(-κ*r₂)
-
     ψ = ψ1 * ψ2 * exp(β*r₁₂/(1+α*r₁₂))
     return ψ
 end
 
 
-function localEnergy(R::Vector{Float64}; α=0.16, β=0.5, κ=2.0)
-    Re1 = R[1:3]
-    Re2 = R[4:6]
-    r₁ = norm(Re1)
-    r₂ = norm(Re2)
-    r₁₂ = norm(Re1-Re2)
-
+function localEnergy(R::Vector{Vector{Float64}}; α=0.16, β=0.5, κ=2.0)
+    r₁ = norm(R[1])
+    r₂ = norm(R[2])
+    r₁₂ = norm(R[1]-R[2])
     u = 1+α*r₁₂
-
     E1 = (κ-2)/r₁
     E2 = (κ-2)/r₂
-
-    Eia = 1/r₁₂ * (1 - 2*β/u^2) + 2*β*α/u^3 - κ^2 - β^2/u^4 + κ*β/u^2* sum((Re1/r₁ - Re2/r₂).*((Re1-Re2)/r₁₂))
-
+    Eia = 1/r₁₂ * (1 - 2*β/u^2) + 2*β*α/u^3 - κ^2 - β^2/u^4 + κ*β/u^2* sum((R[1]/r₁ - R[2]/r₂).*((R[1]-R[2])/r₁₂))
     E = E1 + E2 + Eia
     return E
 end
 
 
-# Define Quantum Force 
-function quantumForce(R::Vector{Float64}; α=0.16, β=0.5, κ=2.0)
-    Re1 = R[1:3]
-    Re2 = R[4:6]
-    r₁ = norm(Re1)
-    r₂ = norm(Re2)
-    r₁₂ = norm(Re1-Re2)
-
+function quantumForce(R::Vector{Vector{Float64}}; α=0.16, β=0.5, κ=2.0)
+    r₁ = norm(R[1])
+    r₂ = norm(R[2])
+    r₁₂ = norm(R[1]-R[2])
     u = 1+α*r₁₂
+    F1 = 2 * (-κ/r₁ * R[1] + β*( 1/(r₁₂*u)  - α/u^2) * (R[1]-R[2]))
+    F2 = 2 * (-κ/r₂ * R[2] - β*( 1/(r₁₂*u)  - α/u^2) * (R[1]-R[2]))
 
-    F1 = 2 * (-κ/r₁ * Re1 + β*( 1/(r₁₂*u)  - α/u^2) * (Re1-Re2))
-    F2 = 2 * (-κ/r₂ * Re2 - β*( 1/(r₁₂*u)  - α/u^2) * (Re1-Re2))
-
-    return [F1...,F2...]
+    return [F1,F2]
 end
 
 
-function GreensFunction(R1::Vector{Float64}, R2::Vector{Float64}; α=0.16, β=0.5, κ=2.0, Δτ=0.5)
-    F = quantumForce(R1)
-    exponent = -norm(R1-R2-(Δτ/2)*F)^2 / (2Δτ)
-
+function GreensFunction(R::Vector{Vector{Float64}}, Rnew::Vector{Vector{Float64}}; α=0.16, β=0.5, κ=2.0, Δτ=0.01)
+    F = quantumForce(R)
+    exponent = -norm(Rnew-R-(Δτ/2)*F)^2 / (2Δτ)
     pref = (2*π*Δτ)^-3 
     G = pref * exp(exponent)
-
     return G
 end
 
 
-# Define random step
-function FPStep(R::Vector{Float64}; α=0.16, β=0.5, κ=2.0, Δτ=0.5)
+function FPStep(R::Vector{Vector{Float64}};α=0.16, β=0.5, κ=2.0, Δτ=0.01)
+    Rnew = copy(R)
+    randomStep = sqrt(Δτ)*[randn(Float64,3),randn(Float64,3)]
+    F = quantumForce(Rnew; α, β, κ)
+    Rnew += randomStep + F*Δτ/2
 
-    # propose a step ( copy old one first)
-    proposeR = copy(R)
- 
-    randomStep = sqrt(Δτ)*(randn(Float64,6))
-    F = quantumForce(R)
-    proposeR += randomStep + F*Δτ/2
-
-    # Calculate acceptance ratio VMC
     ψold = trialWaveFunction(R; α, β, κ)
-    ψpropose = trialWaveFunction(proposeR; α, β, κ)
+    ψpropose = trialWaveFunction(Rnew; α, β, κ)
     acceptance = ψpropose^2/ψold^2
-
-    # Correct acceptance ratio
-    wR2R1 = GreensFunction(proposeR, R; α, β, κ, Δτ)
-    wR1R2 = GreensFunction(R, proposeR; α, β, κ, Δτ)
-    acceptance *= wR2R1/wR1R2
-    acceptance = min(1, acceptance)
-
-    # Take or leave the propsed new position
+    wRnewR = GreensFunction(Rnew, R; α, β, κ, Δτ)
+    wRRnew = GreensFunction(R, Rnew; α, β, κ, Δτ)
+    acceptance *= wRnewR/wRRnew
     if rand() < acceptance
-         return proposeR
+        return Rnew
     end
     return R
 end
 
-function branching(walkers::Vector{Vector{Float64}}, ET::Float64, acc_idx::BitVector)
+function branching(walkers::Vector{Vector{Vector{Float64}}}, ET::Float64, acc_idx::BitVector)
     # q <= 1 -> walker survives with prob q, death with 1-q
     # q >  1 -> birth to m new walkers m= floor(Int, q+r) with r∈[0,1] random
 
@@ -118,17 +91,14 @@ function branching(walkers::Vector{Vector{Float64}}, ET::Float64, acc_idx::BitVe
 end
 
 
-function initWalkers(M=300)
-    walkers = Vector{Vector{Float64}}(undef,M)
-    for i in 1:M
-        walkers[i] = rand(Float64, 6).-0.5
-    end
+function initWalkers(;M=300)
+    walkers = [[rand(Float64,3).-0.5,rand(Float64,3).-0.5] for _ in 1:M]
     return walkers
 end
 
 function runSimulation(;M=300,N=10000,n=1000,n_eq=0,α=0.16,β=0.5,κ=2.0, Δτ=0.5, E₀=-2.99, p::Progress, walkersReturn=false)
     # Initalize M heliumAtoms
-    walkers = initWalkers(M)
+    walkers = initWalkers(;M)
 
     # Initalize Energy
     ET = E₀
