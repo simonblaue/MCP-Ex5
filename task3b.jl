@@ -7,31 +7,11 @@ using LsqFit
 using LinearAlgebra
 using StatsBase
 
+include("pathInt.jl")
+
 T(x, Δτ) =  1/2 * sum( ((x[2:end] - x[1:end-1])/Δτ).^2 )
 V(x) = 1/2 * sum(((x[2:end] + x[1:end-1]) / 2).^2)
-S(x, Δτ) = T(x, Δτ) + V(x)
 
-
-function step(x, Δt, N, h)
-    # Chose random pos in delta tau (not the ends)
-    rng_idx = rand(2:N-1)
-    xnew = copy(x)
-    xnew[rng_idx] += (1-2*rand())*Δt
-
-    # actionNew = S(xnew, Δt)
-
-    ΔS = -(S(xnew, Δt) - S(x, Δt))
-    
-    # acceptance of random step 
-    r = rand()
-    p = exp(-Δt+ΔS)
-
-    if r < p
-        x = xnew
-    end
-
-    return x, xnew[rng_idx]
-end
 
 function integrate()
     t0 = 0
