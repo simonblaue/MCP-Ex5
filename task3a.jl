@@ -25,15 +25,16 @@ function step(x, Δt, N)
     return x
 end
 
+
 function integrate()
     t0 = 0
     tend = 100
     N = 400
     Δt = (tend-t0)/N
     steps = 20000
-
+    p = Progress(steps)
     x = zeros(N)
-    
+
     V_list = zeros(steps)
     T_list = zeros(steps)
 
@@ -41,6 +42,7 @@ function integrate()
         V_list[i] =  V(x)
         T_list[i] = T(x, Δt)
         x = step(x,Δt,N)
+        next!(p)
     end
 
     return V_list, T_list, x
@@ -56,7 +58,6 @@ Vs, Ts, x = integrate()
 plt = plot(Vs, label="Potential")
 plot!(Ts, label="Kinetic")
 
-hist = histogram(x, bins=100)
 
-display(hist)
+savefig(plt, "saves/task3a.energies.pdf")
 display(plt)
