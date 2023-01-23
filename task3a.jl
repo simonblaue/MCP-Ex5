@@ -8,7 +8,7 @@ function integrate()
     tend = 100
     N = 400
     Δt = (tend-t0)/N
-    steps = 20000
+    steps = 200000
     p = Progress(steps)
     x = zeros(N)
 
@@ -18,7 +18,7 @@ function integrate()
     @showprogress for i in 1:steps
         V_list[i] =  V(x)
         T_list[i] = T(x, Δt)
-        x = step(x,Δt,N)
+        x, _ = step(x,Δt,N)
         next!(p)
     end
 

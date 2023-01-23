@@ -18,14 +18,14 @@ function integrate()
     tend = 100
     N = 400
     Δt = (tend-t0)/N
-    steps = 20000
+    steps = 200000
 
     x = zeros(N)
     
     h = zeros(steps)
 
     @showprogress for i in 1:steps
-        x, changedx = step(x,Δt,N,h)
+        x, changedx = step(x,Δt,N)
         h[i] = changedx
     end
 

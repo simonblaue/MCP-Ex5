@@ -1,11 +1,14 @@
 
 S(x, Δτ) = T(x, Δτ) + V(x)
 
+Δx = 0.1
+
 function step(x, Δt, N)
     # Chose random pos in delta tau (not the ends)
     rng_idx = rand(2:N-1)
     xnew = copy(x)
-    xnew[rng_idx] += (1-2*rand())*Δt
+    xnew[rng_idx] += (1-2*rand())*Δx
+
 
     # actionNew = S(xnew, Δt)
 
@@ -28,7 +31,7 @@ function step2d(x, Δt, N)
     rng_idx = rand(2:N-1)
     xnew = copy(x)
 
-    xnew[rng_idx,:] .+= (1 .- 2*rand(2))*Δt
+    xnew[rng_idx,:] .+= (1 .- 2*rand(2))*Δx
 
     ΔS = -(S(xnew, Δt) - S(x, Δt))
     

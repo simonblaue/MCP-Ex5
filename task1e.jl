@@ -40,3 +40,16 @@ res = runSimulation(M=M,N=N,n=n,n_eq=NEQ,s=s,α=optimalParams[1],β=optimalParam
 println("$res")
 
 res = runSimulation(M=M,N=N,n=n,n_eq=NEQ,s=s,α=0.18,β=0.38,κ=1.85,p=p)
+
+
+
+"""
+Results: 
+α = 0.21455790436458227 
+κ = 1.812597900601487
+Minimal Energy: -2.893221062539271 β = 0.4025815070147648 
+
+
+([-2.8908150069669096], [0.0013062113873126917])
+([-2.891501006008572], [0.0010588004136972235])
+"""

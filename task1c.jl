@@ -42,17 +42,20 @@ fittedEv = model(αs, coef(fitEnergies))
 fittedStds = model(αs, coef(fitStds))
 
 p1 = scatter(αs, avEs.±stds, mc="darkblue", label="")
-plot!(αs, fittedEv, lc="red", label="3rd order fit with min at α=$(αs[findmin(fittedEv)[2]])")
+plot!(αs, fittedEv, lc="red", label=L"$α_{min}=%$(αs[findmin(fittedEv)[2]])$, $E_{min}=%$(round(minimum(fittedEv), digits=5))$")
 title!("Energy dependence on α")
 xlabel!(L"α")
 ylabel!(L"E_L")
 
+
 p2 = scatter(αs, stds, label="", mc="darkblue")
-plot!(αs,fittedStds, color="red", label="3rd order fit with min at α=$(αs[findmin(fittedStds)[2]])")
+plot!(αs,fittedStds, color="red", label=L"$α_{min}=%$(αs[findmin(fittedStds)[2]])$, $\sigma_{min}=%$(round(minimum(fittedStds), digits=5))$")
 title!("Std. of Energies depending on α")
 xlabel!(L"α")
 ylabel!(L"σ_{E_L}")
 
+println(L"Minima of $E$:" * "$(minimum(fittedEv))")
+println(L"Minima of $\sigma$:" * "$(minimum(fittedStds))")
 
 savefig(p1, "saves/task1c.avEnergies.pdf")
 savefig(p2, "saves/task1c.avStd.pdf")

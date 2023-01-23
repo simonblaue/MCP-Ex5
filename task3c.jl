@@ -19,7 +19,7 @@ function integrate()
     tend = 100
     N = 400
     Δt = (tend-t0)/N
-    steps = 20000
+    steps = 200000
     p = Progress(2*steps)
     x = zeros(N,2)
 
@@ -52,20 +52,18 @@ Vs, Ts, h = integrate()
 plt = plot(Vs, label="Potential")
 plot!(Ts, label="Kinetic")
 
-
-
 savefig(plt, "saves/task3c.energies.pdf")
 display(plt)
 
-
+lims = (min(h...), max(h...))
 
 hist = histogram2d(h[:,1],h[:,2],
     bins=(100, 100), 
-    show_empty_bins=true,
     normalize=:pdf, 
-    color=:plasma,
+    xlims=lims,
+    ylims=lims
     )
-title!("Normalized 2D Histogram")
+title!("Normalized 2D Histogram as squared wave function ")
 xlabel!("x")
 ylabel!("y")
 
